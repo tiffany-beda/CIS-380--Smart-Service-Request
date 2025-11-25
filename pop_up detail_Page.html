@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Request Details Popup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top left, #0c2340 0%, #020712 55%, #000000 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* --------- MODAL / POPUP --------- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      display: none;          /* hidden by default */
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .modal {
+      width: 800px;
+      max-width: 95%;
+      background: radial-gradient(circle at top left, #10233f 0%, #050914 60%);
+      border-radius: 20px;
+      padding: 24px 26px 20px;
+      border: 1px solid #4da3ff;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .modal-subtitle {
+      font-size: 13px;
+      opacity: 0.7;
+      margin-bottom: 18px;
+    }
+
+    .close-x {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px 20px;
+      margin-bottom: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    label {
+      font-size: 13px;
+      opacity: 0.85;
+    }
+
+    input,
+    textarea {
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: none;
+      background: #ffffff;
+      color: #000;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    input[readonly],
+    textarea[readonly] {
+      background: #e9edf6;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 8px 0 14px;
+      gap: 10px;
+    }
+
+    .status-label {
+      font-size: 14px;
+    }
+
+    .status-badge {
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-badge.pending {
+      background: #ffd966;
+      color: #333;
+    }
+
+    .status-badge.closed,
+    .status-badge.resolved {
+      background: #2fd38a;
+      color: #022010;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border-color: #4da3ff;
+      color: #ffffff;
+    }
+
+    .btn-outline:disabled {
+      border-color: #555b6b;
+      color: #777c8a;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #005eff, #2985ff);
+      color: #ffffff;
+    }
+
+    .btn-danger {
+      background: linear-gradient(90deg, #ff4b4b, #ff7a7a);
+      color: #ffffff;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 650px) {
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ------------- MODAL ------------- -->
+  <div class="modal-overlay" id="detailsModal">
+    <div class="modal">
+      <button class="close-x" id="closeModalBtn">&times;</button>
+
+      <div class="modal-header">
+        <div class="modal-title">Request Details</div>
+        <div class="modal-subtitle">Review your request, update missing info, or close the ticket.</div>
+      </div>
+
+      <form id="requestDetailsForm">
+        <div class="details-grid">
+          <div class="field">
+            <label for="firstName">First Name</label>
+            <input id="firstName" readonly>
+          </div>
+          <div class="field">
+            <label for="lastName">Last Name</label>
+            <input id="lastName" readonly>
+          </div>
+
+          <div class="field full-width">
+            <label for="email">Email</label>
+            <input id="email" type="email" readonly>
+          </div>
+
+          <div class="field">
+            <label for="category">Category</label>
+            <input id="category" readonly>
+          </div>
+          <div class="field">
+            <label for="priority">Priority</label>
+            <input id="priority" readonly>
+          </div>
+
+          <div class="field full-width">
+            <label for="subject">Subject</label>
+            <input id="subject" readonly>
+          </div>
+
+          <div class="field full-width">
+            <label for="description">Description</label>
+            <textarea id="description" readonly></textarea>
+          </div>
+        </div>
+
+        <div class="status-row">
+          <span class="status-label">Status:</span>
+          <span id="statusBadge" class="status-badge pending">Pending</span>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="editBtn">Update</button>
+          <button type="button" class="btn btn-primary" id="saveBtn" disabled>Save Changes</button>
+          <button type="button" class="btn btn-danger" id="closeRequestBtn">Close Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- connect to your storage system -->
+  <script src="storage.js"></script>
+
+  <script>
+    const modal = document.getElementById("detailsModal");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+
+    const editBtn = document.getElementById("editBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const closeRequestBtn = document.getElementById("closeRequestBtn");
+    const statusBadge = document.getElementById("statusBadge");
+
+    const firstNameField = document.getElementById("firstName");
+    const lastNameField = document.getElementById("lastName");
+    const emailField = document.getElementById("email");
+    const categoryField = document.getElementById("category");
+    const priorityField = document.getElementById("priority");
+    const subjectField = document.getElementById("subject");
+    const descriptionField = document.getElementById("description");
+
+    const fields = [
+      firstNameField,
+      lastNameField,
+      emailField,
+      categoryField,
+      priorityField,
+      subjectField,
+      descriptionField
+    ];
+
+    let currentRequestId = null;
+
+    function setStatusBadge(status) {
+      statusBadge.textContent = status;
+      statusBadge.classList.remove("pending", "closed", "resolved");
+
+      const s = status.toLowerCase();
+      if (s === "closed" || s === "resolved") {
+        statusBadge.classList.add("closed");
+      } else {
+        statusBadge.classList.add("pending");
+      }
+    }
+
+    // 🔵 This is what you'll call from the dashboard
+    window.openRequestModal = function (requestId) {
+      const req = getRequestById(requestId);
+
+      if (!req) {
+        alert("Request not found.");
+        return;
+      }
+
+      currentRequestId = req.id;
+
+      firstNameField.value = req.firstName || "";
+      lastNameField.value = req.lastName || "";
+      emailField.value = req.email || "";
+      categoryField.value = req.category || "";
+      priorityField.value = req.priority || "";
+      subjectField.value = req.subject || "";
+      descriptionField.value = req.description || "";
+
+      // lock fields at first
+      fields.forEach(f => f.readOnly = true);
+      saveBtn.disabled = true;
+      editBtn.disabled = false;
+
+      setStatusBadge(req.status || "Pending");
+
+      modal.style.display = "flex";
+    };
+
+    function closeModal() {
+      modal.style.display = "none";
+      currentRequestId = null;
+    }
+
+    closeModalBtn.addEventListener("click", closeModal);
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    // Enable editing
+    editBtn.addEventListener("click", () => {
+      fields.forEach(f => f.readOnly = false);
+      saveBtn.disabled = false;
+      editBtn.disabled = true;
+    });
+
+    // Save changes -> storage.js
+    saveBtn.addEventListener("click", () => {
+      if (!currentRequestId) return;
+
+      const req = getRequestById(currentRequestId);
+      if (!req) return;
+
+      req.firstName = firstNameField.value;
+      req.lastName = lastNameField.value;
+      req.email = emailField.value;
+      req.category = categoryField.value;
+      req.priority = priorityField.value;
+      req.subject = subjectField.value;
+      req.description = descriptionField.value;
+
+      updateRequest(req);  // save to localStorage
+
+      fields.forEach(f => f.readOnly = true);
+      saveBtn.disabled = true;
+      editBtn.disabled = false;
+
+      alert("Changes saved.");
+    });
+
+    // Close / resolve request -> storage.js
+    closeRequestBtn.addEventListener("click", () => {
+      if (!currentRequestId) return;
+
+      closeRequest(currentRequestId);     // sets status in storage
+      setStatusBadge("Closed");
+
+      fields.forEach(f => f.readOnly = true);
+      editBtn.disabled = true;
+      saveBtn.disabled = true;
+
+      alert("Request marked as CLOSED.");
+    });
+  </script>
+</body>
+</html>
